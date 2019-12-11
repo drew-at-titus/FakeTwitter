@@ -3,14 +3,13 @@ package com.titus.faketwitter.tweets;
 import com.titus.faketwitter.tweets.hashtags.Hashtag;
 import com.titus.faketwitter.tweets.hashtags.HashtagRepository;
 import com.titus.faketwitter.users.User;
-
+import com.titus.faketwitter.users.UserRepository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.ocpsoft.prettytime.PrettyTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,13 +18,14 @@ import org.springframework.stereotype.Service;
 public class TweetService {
 
   private final TweetRepository tweetRepository;
-
   private final HashtagRepository hashtagRepository;
+  private final UserRepository userRepository;
 
   @Autowired
-  public TweetService(TweetRepository tweetRepository, HashtagRepository hashtagRepository) {
+  public TweetService(TweetRepository tweetRepository, HashtagRepository hashtagRepository, UserRepository userRepository) {
     this.tweetRepository = tweetRepository;
     this.hashtagRepository = hashtagRepository;
+    this.userRepository = userRepository;
   }
 
   public List<DisplayableTweet> findAll() {
@@ -53,7 +53,7 @@ public class TweetService {
   private List<DisplayableTweet> display(List<Tweet> tweets) {
     PrettyTime prettyTime = new PrettyTime();
     Date now = new Date();
-    return tweets.stream().map(tweet -> new DisplayableTweet(tweet, prettyTime, now)).collect(Collectors.toList());
+    return tweets.stream().map(tweet -> new DisplayableTweet(tweet, prettyTime, now, userRepository)).collect(Collectors.toList());
   }
   
   public void save(Tweet tweet) {

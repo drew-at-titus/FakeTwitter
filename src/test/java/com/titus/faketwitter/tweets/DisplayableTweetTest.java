@@ -27,7 +27,7 @@ public class DisplayableTweetTest {
     Tweet tweet = new Tweet();
     tweet.setMessage(message);
     tweet.setHashtags(Arrays.asList(hashtags));
-    return new DisplayableTweet(tweet, null, null);
+    return new DisplayableTweet(tweet, null, null, null);
   }
   
   private Hashtag hashtag(long id, String tag) {

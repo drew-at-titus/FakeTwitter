@@ -2,7 +2,7 @@ package com.titus.faketwitter.tweets;
 
 import com.titus.faketwitter.tweets.hashtags.Hashtag;
 import com.titus.faketwitter.users.User;
-
+import com.titus.faketwitter.users.UserRepository;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -17,16 +17,18 @@ public class DisplayableTweet {
 
   private static final int MAX_DISPLAY_URL_LENGTH = 23;
 
-  private static final SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yy");
+  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("M/d/yy");
   
   private final Tweet tweet;
   private final PrettyTime prettyTime;
   private final Date now;
+  private final UserRepository userRepository;
 
-  public DisplayableTweet(Tweet tweet, PrettyTime prettyTime, Date now) {
+  public DisplayableTweet(Tweet tweet, PrettyTime prettyTime, Date now, UserRepository userRepository) {
     this.tweet = tweet;
     this.prettyTime = prettyTime;
     this.now = now;
+    this.userRepository = userRepository;
   }
   
   public Long getId() {
@@ -43,10 +45,30 @@ public class DisplayableTweet {
       return "";
     }
     decoratedMessage = decorateHashtags(decoratedMessage);
+    decoratedMessage = decorateMentions(decoratedMessage);
     decoratedMessage = decorateUrls(decoratedMessage);
     
-    
     return decoratedMessage;
+  }
+
+  private String decorateMentions(String message) {
+    String[] split = message.split(" ");
+    
+    for(int i=0;i<split.length;i++) {
+      if(split[i].startsWith("@")) {
+        String mentionedUsername = split[i].substring(1, split[i].length());
+        User mentionedUser = userRepository.findByUsername(mentionedUsername);
+        if(mentionedUser != null) {
+          split[i] = encodeUserUrl(mentionedUsername, split[i]);
+        }
+      }
+    }
+    
+    return join(split);
+  }
+  
+  private String encodeUserUrl(String username, String mentionedUsername) {
+    return "<a href=\"/users/" + username + "\">" + mentionedUsername + "</a>";
   }
 
   private String decorateHashtags(String message) {
@@ -100,7 +122,7 @@ public class DisplayableTweet {
     long diffInMillies = Math.abs(now.getTime() - tweet.getCreatedAt().getTime());
     long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
     if (diff > 3) {
-      return dateFormat.format(tweet.getCreatedAt());
+      return DATE_FORMAT.format(tweet.getCreatedAt());
     }
     return prettyTime.format(tweet.getCreatedAt());
   }
